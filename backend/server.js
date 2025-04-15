@@ -16,6 +16,9 @@ app.use(express.json());
 // Connect Database
 connectDB();
 
+// Routes
+app.use("/api/auth", require("./routes/auth"));
+
 // Basic route
 globalThis._server_root = __dirname;
 app.get("/", (req, res) => res.send("API Running"));
