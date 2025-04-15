@@ -2,6 +2,7 @@ const User = require("../models/User");
 const { validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { sendSuccess, sendError } = require("../utils/responseHandler");
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -9,14 +10,14 @@ const jwt = require("jsonwebtoken");
 exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return sendError(res, 400, "Validation error", errors.array());
   }
 
   const { name, email, password } = req.body;
   try {
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ errors: [{ msg: "User already exists" }] });
+      return sendError(res, 400, "User already exists");
     }
 
     user = new User({ name, email, password });
@@ -31,12 +32,12 @@ exports.register = async (req, res) => {
       { expiresIn: "7d" },
       (err, token) => {
         if (err) throw err;
-        res.json({ token });
+        return sendSuccess(res, { token }, "Registration successful", 201);
       }
     );
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server error");
+    return sendError(res, 500, "Server error");
   }
 };
 
@@ -46,19 +47,19 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return sendError(res, 400, "Validation error", errors.array());
   }
 
   const { email, password } = req.body;
   try {
     let user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ errors: [{ msg: "Invalid credentials" }] });
+      return sendError(res, 400, "Invalid credentials");
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ errors: [{ msg: "Invalid credentials" }] });
+      return sendError(res, 400, "Invalid credentials");
     }
 
     const payload = { user: { id: user.id } };
@@ -68,11 +69,11 @@ exports.login = async (req, res) => {
       { expiresIn: "7d" },
       (err, token) => {
         if (err) throw err;
-        res.json({ token });
+        return sendSuccess(res, { token }, "Login successful");
       }
     );
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server error");
+    return sendError(res, 500, "Server error");
   }
 };
