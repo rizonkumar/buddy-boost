@@ -18,6 +18,8 @@ connectDB();
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));
+app.use("/api/auth", require("./routes/otherAuth"));
+app.use("/api", require("./routes/protected"));
 
 // Basic route
 globalThis._server_root = __dirname;
